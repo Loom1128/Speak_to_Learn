@@ -40,13 +40,13 @@
   .spec td.note { min-width:280px; white-space:normal; }
   .spec .file td { font-weight:700; }
   .spec .foot td { border:none; }
-  #stage.ctrl { cursor:zoom-in; } #stage.ctrl.shift { cursor:zoom-out; }
+  #stage.ctrl { cursor:grab; } #stage.ctrl.shift { cursor:zoom-out; } #stage.grabbing, #stage.grabbing * { cursor:grabbing !important; user-select:none; }
 </style>
 </head>
 <body>
 <header>
   <h1>AI 教學評量系統｜資料庫 ER 圖</h1>
-  <div class="sub">共 19 張。可依情境或依資料表切換；Ctrl＋左鍵放大、Ctrl＋Shift＋左鍵縮小（也可用 Ctrl＋滾輪或下方按鈕）。</div>
+  <div class="sub">共 19 張。可依情境或依資料表切換；Ctrl＋左鍵拖曳可平移畫面，Ctrl＋左鍵單擊放大、加 Shift 縮小（也可用 Ctrl＋滾輪或下方按鈕）。</div>
 </header>
 <nav>
   <label>依情境拆分 <select id="selView"></select></label>
@@ -310,9 +310,23 @@ function zoomAt(factor, clientX, clientY) {
 document.getElementById("zin").onclick = () => { zoom = Math.min(3, zoom+0.1); applyZoom(); };
 document.getElementById("zout").onclick = () => { zoom = Math.max(0.2, zoom-0.1); applyZoom(); };
 document.getElementById("zfit").onclick = () => { zoom = 1; applyZoom(); };
+// Ctrl＋左鍵拖曳：平移畫面（像 Figma）；Ctrl＋左鍵單擊：放大，加 Shift 縮小
+let drag = null;
 stage.addEventListener("mousedown", e => {
   if (e.button !== 0 || !(e.ctrlKey || e.metaKey)) return;
-  e.preventDefault(); zoomAt(e.shiftKey ? 1/1.25 : 1.25, e.clientX, e.clientY);
+  e.preventDefault();
+  drag = { x: e.clientX, y: e.clientY, sl: stage.scrollLeft, st: stage.scrollTop, moved: false, shift: e.shiftKey };
+});
+window.addEventListener("mousemove", e => {
+  if (!drag) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (!drag.moved && Math.hypot(dx, dy) > 4) { drag.moved = true; stage.classList.add("grabbing"); }
+  if (drag.moved) { stage.scrollLeft = drag.sl - dx; stage.scrollTop = drag.st - dy; }
+});
+window.addEventListener("mouseup", e => {
+  if (!drag) return;
+  if (!drag.moved) zoomAt(drag.shift ? 1/1.25 : 1.25, e.clientX, e.clientY);
+  drag = null; stage.classList.remove("grabbing");
 });
 stage.addEventListener("contextmenu", e => { if (e.ctrlKey) e.preventDefault(); });
 stage.addEventListener("wheel", e => {
