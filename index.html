@@ -41,7 +41,12 @@
   .spec .file td { font-weight:700; }
   .spec .foot td { border:none; }
   #stage.ctrl { cursor:grab; } #stage.ctrl.shift { cursor:zoom-out; } #stage.grabbing, #stage.grabbing * { cursor:grabbing !important; user-select:none; }
-  .hint { margin:8px 32px 0; font-size:13px; color:var(--accent); }
+  .hint { margin:0 32px 8px; font-size:13px; color:var(--accent); }
+  .fullbtn { font:inherit; font-size:14px; padding:7px 14px; border:1px solid var(--accent); border-radius:8px; background:var(--accent); color:#fff; cursor:pointer; }
+  .exitbtn { display:none; position:fixed; top:14px; right:18px; z-index:1001; font:inherit; font-size:14px; padding:8px 14px; border:1px solid var(--accent); border-radius:8px; background:#fff; color:var(--accent); cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.12); }
+  body.full { overflow:hidden; }
+  body.full #stage { position:fixed; inset:0; margin:0; height:100vh; min-height:0; border-radius:0; border:none; z-index:1000; }
+  body.full .exitbtn { display:block; }
 </style>
 </head>
 <body>
@@ -52,9 +57,11 @@
 <nav>
   <label>依情境拆分 <select id="selView"></select></label>
   <label>依 table 拆分 <select id="selTable"></select></label>
+  <button id="btnFull" class="fullbtn" type="button">⛶ 滿版顯示</button>
 </nav>
-<div id="stage"><div id="diagram"></div></div>
 <div class="hint">Ctrl＋滑鼠左鍵拖曳：移動畫面　｜　Ctrl＋滑鼠左鍵單擊：放大（加 Shift 縮小）　｜　Ctrl＋滾輪：放大縮小</div>
+<div id="stage"><div id="diagram"></div></div>
+<button id="btnExit" class="exitbtn" type="button">✕ 離開滿版（Esc）</button>
 <div id="desc"></div>
 
 <section class="notes">
@@ -329,6 +336,10 @@ stage.addEventListener("wheel", e => {
 const setCtrl = e => { stage.classList.toggle("ctrl", e.ctrlKey || e.metaKey); stage.classList.toggle("shift", e.shiftKey); };
 window.addEventListener("keydown", setCtrl); window.addEventListener("keyup", setCtrl);
 
+const setFull = on => { document.body.classList.toggle("full", on); };
+document.getElementById("btnFull").onclick = () => setFull(true);
+document.getElementById("btnExit").onclick = () => setFull(false);
+window.addEventListener("keydown", e => { if (e.key === "Escape") setFull(false); });
 const selView = document.getElementById("selView"), selTable = document.getElementById("selTable");
 function setHash(h) { try { history.replaceState(null, "", "#" + h); } catch (e) {} }
 
