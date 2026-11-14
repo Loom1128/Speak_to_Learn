@@ -12,32 +12,46 @@
   header { padding:28px 32px 8px; }
   h1 { margin:0 0 6px; font-size:24px; }
   .sub { color:var(--muted); font-size:14px; }
-  nav { display:flex; gap:8px; flex-wrap:wrap; padding:16px 32px; }
-  nav button { border:1px solid var(--line); background:var(--card); padding:8px 14px; border-radius:999px; cursor:pointer; font:inherit; font-size:14px; }
-  nav button.on { background:var(--accent); color:#fff; border-color:var(--accent); }
+  nav { display:flex; gap:20px; flex-wrap:wrap; align-items:center; padding:14px 32px; }
+  nav label { font-size:14px; color:var(--muted); display:flex; align-items:center; gap:8px; }
+  nav select { font:inherit; font-size:14px; padding:7px 10px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--ink); min-width:240px; cursor:pointer; }
+  nav select.on { border-color:var(--accent); box-shadow:0 0 0 2px #e4defa; }
   .tools { display:flex; gap:6px; padding:0 32px 8px; align-items:center; color:var(--muted); font-size:13px; }
   .tools button { border:1px solid var(--line); background:var(--card); width:32px; height:28px; border-radius:6px; cursor:pointer; font-size:15px; }
-  #stage { margin:0 32px; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:auto; height:88vh; min-height:640px; }
+  #stage { margin:0 32px; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:auto; height:82vh; min-height:600px; }
   #diagram { transform-origin:0 0; padding:24px; display:inline-block; }
-  #desc { margin:16px 32px 0; font-size:14px; color:var(--muted); line-height:1.7; }
-  section.notes { margin:16px 32px 24px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 20px; max-height:170px; overflow:auto; }
-  section.notes h2 { position:sticky; top:-12px; background:var(--card); padding:4px 0; }
-  section.notes h2 { font-size:17px; margin:0 0 10px; }
+  #desc { margin:10px 32px 0; font-size:14px; color:var(--muted); line-height:1.7; }
+  section.notes { margin:12px 32px 20px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:8px 20px; max-height:120px; overflow:auto; }
+  section.notes h2 { position:sticky; top:-8px; background:var(--card); padding:4px 0; }
+  section.notes h2 { font-size:15px; margin:0 0 4px; }
   section.notes li { margin:6px 0; font-size:14px; line-height:1.7; }
   code { background:#f1f0fa; padding:1px 5px; border-radius:4px; font-size:13px; }
   .ent { width:100%; height:100%; }
-  .ent table { width:100%; height:100%; border-collapse:collapse; table-layout:auto; font-family:"Noto Sans TC", sans-serif; font-size:12px; background:#fff; border:1.5px solid #5b4bb7; }
+  .ent table { width:100%; height:100%; border-collapse:collapse; font-family:"Noto Sans TC", sans-serif; font-size:12px; background:#fff; border:1.5px solid #5b4bb7; }
   .ent th { height:var(--rh); background:#efeafc; color:#1f2328; font-weight:500; border-bottom:1.5px solid #5b4bb7; padding:0 6px; white-space:nowrap; }
   .ent td { height:var(--rh); border:1px solid #5b4bb7; padding:0 6px; white-space:nowrap; color:#1f2328; overflow:hidden; }
   .ent td.k { text-align:center; }
+  .spec { font-family:"Microsoft JhengHei","微軟正黑體","Noto Sans TC",sans-serif; font-size:13px; color:#000; }
+  .spec a.back { font-family:"PMingLiU","新細明體",serif; font-size:15px; color:#0563c1; }
+  .spec table { border-collapse:collapse; margin-top:14px; }
+  .spec td, .spec th { border:1px solid #000; padding:3px 8px; vertical-align:top; text-align:left; }
+  .spec th { background:#ffff99; font-weight:700; }
+  .spec td.c { text-align:center; } .spec td.pk { color:#ff0000; }
+  .spec td.note { min-width:280px; white-space:normal; }
+  .spec .file td { font-weight:700; }
+  .spec .foot td { border:none; }
+  #stage.ctrl { cursor:zoom-in; } #stage.ctrl.shift { cursor:zoom-out; }
 </style>
 </head>
 <body>
 <header>
   <h1>AI 教學評量系統｜資料庫 ER 圖</h1>
-  <div class="sub">共 19 張。可以切換看全圖或各模組，滑鼠拖曳捲動，用 ＋／− 縮放。</div>
+  <div class="sub">共 19 張。可依情境或依資料表切換；Ctrl＋左鍵放大、Ctrl＋Shift＋左鍵縮小（也可用 Ctrl＋滾輪或下方按鈕）。</div>
 </header>
-<nav id="tabs"></nav>
+<nav>
+  <label>依情境拆分 <select id="selView"></select></label>
+  <label>依 table 拆分 <select id="selTable"></select></label>
+</nav>
 <div class="tools">
   <button id="zout" title="縮小">−</button>
   <button id="zin" title="放大">＋</button>
@@ -48,7 +62,7 @@
 <div id="desc"></div>
 
 <section class="notes">
-  <h2>設計說明與假設 <span style="font-size:12px;font-weight:400;color:var(--muted)">（可捲動查看）</span></h2>
+  <h2>設計說明與假設</h2>
   <ul>
     <li><b>符合第三正規化（3NF）</b>：可以由其他欄位推得的資料都不重複存放。教學場次的學生與任務經由 <code>handout_id</code> 取得；講義評分和教學評分的評分依據經由 <code>task_id</code> 取得；教學總分用 SUM 計算；影片觀看秒數與比例由 <code>watched_segments</code> 計算。講義評分拆成主表（每份講義一筆，存評分時間）和細項表（每類一筆），避免評分時間在 6 筆中重複。</li>
     <li><b>老師和學生都用 <code>user_id</code></b>：各表不另外設 teacher_id、student_id，一律用使用者編號關聯 <code>users</code>，角色從 <code>users.role</code> 判斷。寫入時，由 API 檢查登入者的角色。</li>
@@ -74,131 +88,131 @@ const E = {
 USERS: `USERS["使用者 users"] {
   int user_id PK "使用者編號"
   varchar account UK "帳號"
-  varchar password_hash "密碼雜湊"
+  varchar password_hash "密碼（雜湊）"
   varchar name "姓名"
-  enum role "角色｜teacher / student / admin"
-  enum user_status "帳號狀態｜啟用 / 停用"
+  enum role "角色：teacher / student / admin"
+  enum user_status "帳號狀態：啟用 / 停用"
   datetime created_at "建立時間"
 }`,
 MATERIALS: `MATERIALS["教材 materials"] {
   int material_id PK "教材編號"
-  int user_id FK "上傳教師編號｜上傳教師（使用者編號）"
+  int user_id FK "上傳教師（使用者編號）"
   varchar material_title "教材名稱"
-  enum material_type "教材類型｜影片 / ppt / pdf / word"
-  varchar material_file_url "教材檔案路徑"
-  int duration_sec "影片長度｜影片長度（秒），影片才有"
-  datetime material_uploaded_at "教材上傳時間"
+  enum material_type "影片 / ppt / pdf / word"
+  varchar material_file_url "檔案路徑"
+  int duration_sec "影片長度（秒），影片才有"
+  datetime material_uploaded_at "上傳時間"
 }`,
 TASKS: `TASKS["學習任務 tasks"] {
   int task_id PK "任務編號"
-  int user_id FK "建立教師編號｜建立教師（使用者編號）"
+  int user_id FK "建立教師（使用者編號）"
   varchar task_title "任務名稱"
   text description "任務說明"
-  datetime start_at "學習開始時間｜可學習開始"
-  datetime end_at "學習截止時間｜可學習截止"
-  tinyint question_difficulty "提問難度｜提問難度 0淺 1中 2深"
+  datetime start_at "可學習開始"
+  datetime end_at "可學習截止"
+  tinyint question_difficulty "提問難度 0淺 1中 2深"
   int question_count "提問題數"
-  enum task_status "任務狀態｜草稿 / 已發布 / 已結束"
+  enum task_status "草稿 / 已發布 / 已結束"
   datetime created_at "建立時間"
   datetime published_at "發布時間"
 }`,
 TASK_MATERIALS: `TASK_MATERIALS["任務教材 task_materials"] {
-  int task_id PK, FK "任務編號"
-  int material_id PK, FK "教材編號"
+  int task_id PK, FK "任務"
+  int material_id PK, FK "教材"
 }`,
 TASK_ASSIGNMENTS: `TASK_ASSIGNMENTS["任務指派 task_assignments"] {
-  int task_id PK, FK "任務編號"
-  int user_id PK, FK "學生編號｜學生（使用者編號）"
+  int task_id PK, FK "任務"
+  int user_id PK, FK "學生（使用者編號）"
   datetime assigned_at "指派時間"
 }`,
 TASK_CRITERIA: `TASK_CRITERIA["評分依據 task_criteria"] {
-  int task_id PK, FK "任務編號"
-  tinyint level_id PK "Bloom 指標編號｜Bloom 指標 1–6"
-  text criteria_content "評分依據內容｜此指標在本任務的評分依據"
+  int task_id PK, FK "任務"
+  tinyint level_id PK "Bloom 指標 1–6"
+  text criteria_content "此指標在本任務的評分依據"
 }`,
 VIDEO_PROGRESS: `MATERIAL_PROGRESS["教材完成紀錄 material_progress"] {
-  int user_id PK, FK "學生編號｜學生（使用者編號）"
-  int task_id PK, FK "任務編號"
-  int material_id PK, FK "教材編號"
-  json watched_segments "已觀看區間｜看過的區間（影片才有）"
-  int last_position_sec "上次播放位置｜影片才有"
-  datetime completed_at "完成時間｜影片達 80% ／文件下載"
+  int user_id PK, FK "學生（使用者編號）"
+  int task_id PK, FK "任務"
+  int material_id PK, FK "教材"
+  json watched_segments "看過的區間（影片才有）"
+  int last_position_sec "上次播放位置（影片才有）"
+  datetime completed_at "完成時間：影片達 80% ／文件下載"
 }`,
 HANDOUTS: `HANDOUTS["學生講義 handouts"] {
   int handout_id PK "講義編號"
-  int user_id FK "學生編號｜學生（使用者編號）"
-  int task_id FK "任務編號"
+  int user_id FK "學生（使用者編號）"
+  int task_id FK "任務"
   varchar handout_title "講義名稱"
-  enum handout_type "講義類型｜ppt / pdf / word"
-  varchar handout_file_url "講義檔案路徑"
+  enum handout_type "ppt / pdf / word"
+  varchar handout_file_url "檔案路徑"
   int version "版本號"
-  datetime handout_uploaded_at "講義上傳時間"
+  datetime handout_uploaded_at "上傳時間"
 }`,
 HANDOUT_EVALUATIONS: `HANDOUT_EVALUATIONS["講義評分 handout_evaluations"] {
-  int handout_id PK, FK "講義編號｜講義（某一版本）"
-  datetime handout_evaluated_at "講義評分時間"
+  int handout_id PK, FK "講義（某一版本）"
+  datetime handout_evaluated_at "評分時間"
 }`,
 HANDOUT_EVAL_ITEMS: `HANDOUT_EVAL_ITEMS["講義評分細項 handout_eval_items"] {
-  int handout_id PK, FK "講義編號｜對應的講義評分"
-  tinyint level_id PK "Bloom 指標編號｜Bloom 指標 1–6"
-  tinyint handout_score "講義分數｜0 / 1 / 2"
-  text handout_comment "講義評論｜該指標的評論"
+  int handout_id PK, FK "講義評分"
+  tinyint level_id PK "Bloom 指標 1–6"
+  tinyint handout_score "0 / 1 / 2"
+  text handout_comment "該指標的評論"
 }`,
 SESSIONS: `TEACHING_SESSIONS["教學場次 teaching_sessions"] {
   int session_id PK "場次編號"
-  int handout_id FK "講義編號｜使用的講義版本"
-  datetime started_at "開始教學時間"
-  datetime ended_at "結束教學時間"
-  enum session_status "場次狀態｜教學中 / 問答完成 / 已評分 / 已摘要"
+  int handout_id FK "使用的講義版本"
+  datetime started_at "開始教學"
+  datetime ended_at "結束教學"
+  enum session_status "教學中 / 問答完成 / 已評分 / 已摘要"
 }`,
 TRANSCRIPTS: `TRANSCRIPTS["教學逐字稿 transcripts"] {
   int transcript_id PK "逐字稿編號"
-  int session_id FK, UK "場次編號"
+  int session_id FK, UK "場次"
   text full_text "逐字稿全文"
-  json segments "逐字稿分段｜含時間軸的分段"
+  json segments "含時間軸的分段"
   datetime created_at "建立時間"
 }`,
 SESSION_QA: `SESSION_QA["聽眾 AI 問答 session_qa"] {
   int qa_id PK "問答編號"
-  int session_id FK "場次編號"
+  int session_id FK "場次"
   int seq "題號"
-  tinyint difficulty "提問難度｜0淺 1中 2深"
-  text question_text "提問內容｜聽眾 AI 提問"
-  text answer_text "回答內容｜學生回答"
+  tinyint difficulty "0淺 1中 2深"
+  text question_text "聽眾 AI 提問"
+  text answer_text "學生回答"
 }`,
 TEACHING_EVALUATIONS: `TEACHING_EVALUATIONS["評分AI評分 teaching_evaluations"] {
   int eval_id PK "評分AI評分編號"
-  int session_id FK, UK "場次編號"
-  datetime ai_evaluated_at "AI 評分時間"
+  int session_id FK, UK "場次"
+  datetime ai_evaluated_at "評分時間"
 }`,
 EVALUATION_ITEMS: `EVALUATION_ITEMS["評分AI評分細項 evaluation_items"] {
-  int eval_id PK, FK "評分AI評分編號"
-  tinyint level_id PK "Bloom 指標編號｜Bloom 指標 1–6"
-  tinyint ai_score "AI 分數｜0 / 1 / 2"
-  text ai_comment "AI 評論｜該指標的評論"
+  int eval_id PK, FK "評分AI評分"
+  tinyint level_id PK "Bloom 指標 1–6"
+  tinyint ai_score "0 / 1 / 2"
+  text ai_comment "該指標的評論"
 }`,
 EVALUATION_SUMMARIES: `EVALUATION_SUMMARIES["分段摘要 evaluation_summaries"] {
   int summary_id PK "摘要編號"
-  int eval_id FK "評分AI評分編號"
-  tinyint level_id "Bloom 指標編號｜對應 Bloom 指標 1–6"
-  text summary_text "摘要內容｜不含分數"
+  int eval_id FK "評分AI評分"
+  tinyint level_id "對應 Bloom 指標 1–6"
+  text summary_text "摘要內容（不含分數）"
   datetime created_at "建立時間"
 }`,
 TEACHER_REVIEWS: `TEACHER_REVIEWS["教師評分 teacher_reviews"] {
-  int eval_id PK, FK "評分AI評分編號｜老師看的是哪一次 AI 評分的摘要"
-  int user_id FK "評分教師編號｜評分老師（使用者編號）"
-  datetime reviewed_at "教師評分時間"
+  int eval_id PK, FK "看的是哪一次 AI 評分的摘要"
+  int user_id FK "評分老師（使用者編號）"
+  datetime reviewed_at "評分時間"
 }`,
 TEACHER_REVIEW_ITEMS: `TEACHER_REVIEW_ITEMS["教師評分細項 teacher_review_items"] {
-  int eval_id PK, FK "評分AI評分編號｜對應的教師評分"
-  tinyint level_id PK "Bloom 指標編號｜Bloom 指標 1–6"
-  tinyint teacher_score "教師分數｜0 / 1 / 2"
-  text teacher_comment "教師評語｜老師評語（可空）"
+  int eval_id PK, FK "教師評分"
+  tinyint level_id PK "Bloom 指標 1–6"
+  tinyint teacher_score "0 / 1 / 2"
+  text teacher_comment "老師評語（可空）"
 }`,
 BLOOM: `BLOOM_LEVELS["Bloom 指標 bloom_levels"] {
-  tinyint level_id PK "Bloom 指標編號｜1–6"
-  varchar level_name "指標名稱｜記憶 理解 應用 分析 評鑑 創造"
-  text definition "指標定義"
+  tinyint level_id PK "1–6"
+  varchar level_name "記憶 理解 應用 分析 評鑑 創造"
+  text definition "定義"
   text example_questions "範例問題"
 }`
 };
@@ -236,39 +250,6 @@ const R = {
   cr_it:  `TASK_CRITERIA ||..o{ EVALUATION_ITEMS : "評分時引用"`
 };
 
-// 把每張表重畫成「中文名稱｜欄位名稱｜資料型別｜鍵｜說明」五欄（沿用 Mermaid 算好的框大小與連線）
-const PARSED = {};
-for (const [k, src] of Object.entries(E)) {
-  const head = src.match(/^(\w+)\["([^"]+)"\]/);
-  const rows = [];
-  for (const line of src.split("\n").slice(1)) {
-    const m = line.match(/^\s*(\w+) (\w+)(?: ((?:PK|FK|UK)(?:, ?(?:PK|FK|UK))*))? "(.*)"$/);
-    if (!m) continue;
-    const [zh, ...rest] = m[4].split("｜");
-    rows.push({ type: m[1].toUpperCase(), name: m[2], keys: (m[3] || "").replace(/, ?/g, ","), zh, desc: rest.join("｜") });
-  }
-  PARSED[head[1]] = { title: head[2], rows };
-}
-function esc(t) { return String(t).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c])); }
-function relabel() {
-  const svgEl = diagram.querySelector("svg");
-  const NS = "http://www.w3.org/2000/svg";
-  svgEl.querySelectorAll('g[id*="-entity-"]').forEach(g => {
-    const m = g.id.match(/-entity-(.+)-\d+$/);
-    const info = m && PARSED[m[1]];
-    if (!info) return;
-    const box = g.getBBox();
-    [...g.childNodes].forEach(c => { if (c.setAttribute) c.setAttribute("visibility", "hidden"); });
-    const rowH = box.height / (info.rows.length + 1);
-    const fo = document.createElementNS(NS, "foreignObject");
-    fo.setAttribute("x", box.x); fo.setAttribute("y", box.y);
-    fo.setAttribute("width", box.width); fo.setAttribute("height", box.height);
-    const body = info.rows.map(r => `<tr><td>${esc(r.zh)}</td><td>${esc(r.name)}</td><td>${esc(r.type)}</td><td class="k">${esc(r.keys)}</td><td>${esc(r.desc)}</td></tr>`).join("");
-    fo.innerHTML = `<div xmlns="http://www.w3.org/1999/xhtml" class="ent"><table style="--rh:${rowH}px"><thead><tr><th colspan="5">${esc(info.title)}</th></tr></thead><tbody>${body}</tbody></table></div>`;
-    g.appendChild(fo);
-  });
-}
-
 const VIEWS = [
   { id:"all", name:"全圖", ents:["USERS", "TASKS", "TASK_ASSIGNMENTS", "TASK_CRITERIA", "HANDOUTS", "HANDOUT_EVALUATIONS", "HANDOUT_EVAL_ITEMS", "SESSIONS", "TRANSCRIPTS", "SESSION_QA", "TEACHING_EVALUATIONS", "EVALUATION_ITEMS", "EVALUATION_SUMMARIES", "TEACHER_REVIEWS", "TEACHER_REVIEW_ITEMS", "TASK_MATERIALS", "VIDEO_PROGRESS", "MATERIALS"], rels:["u_task", "u_h", "u_ta", "t_ta", "t_cr", "t_h", "h_he", "he_hi", "h_s", "s_tr", "s_qa", "s_ev", "ev_it", "ev_su", "ev_tr", "u_tr", "tr_ti", "t_tm", "t_vp", "u_vp", "m_tm", "m_vp", "u_mat"],
     desc:"完整 18 張資料表。為了讓線條清楚，全圖不畫虛線（bloom_levels 的對應、評分依據的「評分時引用」），請到模組 ①、③、④ 查看。表很多時建議切到下面各模組看欄位細節。" },
@@ -286,28 +267,107 @@ const VIEWS = [
     desc:"學生用某一版講義進行語音教學（學生與任務經由 handout_id 取得）→ 逐字稿；聽眾 AI 提問 → 問答紀錄；評分 AI 產生六指標分數＋評論，再整理成 6 段摘要；老師看摘要後，6 類各給一個分數（圖四 C、D 區）。" }
 ];
 
+const SPEC = [{"sheet": "01_users", "zh": "使用者", "en": "users", "rows": [[1, "使用者編號", "user_id", "int", "PK", "NOT NULL,", "IDENTITY(1,1)"], [2, "帳號", "account", "nvarchar(50)", "UK", "NOT NULL,", "UNIQUE"], [3, "密碼雜湊", "password_hash", "varchar(255)", null, "NOT NULL,", null], [4, "姓名", "name", "nvarchar(50)", null, "NOT NULL,", null], [5, "角色", "role", "nvarchar(20)", null, "NOT NULL,", "限定值：teacher / student / admin"], [6, "帳號狀態", "user_status", "nvarchar(20)", null, "NOT NULL,", "限定值：啟用 / 停用"], [7, "建立時間", "created_at", "datetime", null, "NOT NULL,", null]], "pk": "user_id"}, {"sheet": "02_materials", "zh": "教材", "en": "materials", "rows": [[1, "教材編號", "material_id", "int", "PK", "NOT NULL,", "IDENTITY(1,1)"], [2, "上傳教師編號", "user_id", "int", "FK", "NOT NULL,", "FK → users.user_id；上傳教師（使用者編號）"], [3, "教材名稱", "material_title", "nvarchar(100)", null, "NOT NULL,", null], [4, "教材類型", "material_type", "nvarchar(20)", null, "NOT NULL,", "限定值：影片 / ppt / pdf / word"], [5, "教材檔案路徑", "material_file_url", "nvarchar(500)", null, "NOT NULL,", null], [6, "影片長度", "duration_sec", "int", null, ",", "影片長度（秒），影片才有"], [7, "教材上傳時間", "material_uploaded_at", "datetime", null, "NOT NULL,", null]], "pk": "material_id"}, {"sheet": "03_tasks", "zh": "學習任務", "en": "tasks", "rows": [[1, "任務編號", "task_id", "int", "PK", "NOT NULL,", "IDENTITY(1,1)"], [2, "建立教師編號", "user_id", "int", "FK", "NOT NULL,", "FK → users.user_id；建立教師（使用者編號）"], [3, "任務名稱", "task_title", "nvarchar(100)", null, "NOT NULL,", null], [4, "任務說明", "description", "nvarchar(max)", null, ",", null], [5, "學習開始時間", "start_at", "datetime", null, "NOT NULL,", "可學習開始"], [6, "學習截止時間", "end_at", "datetime", null, "NOT NULL,", "可學習截止"], [7, "提問難度", "question_difficulty", "tinyint", null, "NOT NULL,", "提問難度 0淺 1中 2深"], [8, "提問題數", "question_count", "int", null, "NOT NULL,", null], [9, "任務狀態", "task_status", "nvarchar(20)", null, "NOT NULL,", "限定值：草稿 / 已發布 / 已結束"], [10, "建立時間", "created_at", "datetime", null, "NOT NULL,", null], [11, "發布時間", "published_at", "datetime", null, ",", null]], "pk": "task_id"}, {"sheet": "04_task_materials", "zh": "任務教材", "en": "task_materials", "rows": [[1, "任務編號", "task_id", "int", "PK,FK", "NOT NULL,", "FK → tasks.task_id"], [2, "教材編號", "material_id", "int", "PK,FK", "NOT NULL,", "FK → materials.material_id"]], "pk": "task_id,material_id"}, {"sheet": "05_task_assignments", "zh": "任務指派", "en": "task_assignments", "rows": [[1, "任務編號", "task_id", "int", "PK,FK", "NOT NULL,", "FK → tasks.task_id"], [2, "學生編號", "user_id", "int", "PK,FK", "NOT NULL,", "FK → users.user_id；學生（使用者編號）"], [3, "指派時間", "assigned_at", "datetime", null, "NOT NULL,", null]], "pk": "task_id,user_id"}, {"sheet": "06_task_criteria", "zh": "評分依據", "en": "task_criteria", "rows": [[1, "任務編號", "task_id", "int", "PK,FK", "NOT NULL,", "FK → tasks.task_id"], [2, "Bloom 指標編號", "level_id", "tinyint", "PK", "NOT NULL,", "CHECK 1–6（Bloom 指標）"], [3, "評分依據內容", "criteria_content", "nvarchar(max)", null, "NOT NULL,", "此指標在本任務的評分依據"]], "pk": "task_id,level_id"}, {"sheet": "07_material_progress", "zh": "教材完成紀錄", "en": "material_progress", "rows": [[1, "學生編號", "user_id", "int", "PK,FK", "NOT NULL,", "FK → users.user_id；學生（使用者編號）"], [2, "任務編號", "task_id", "int", "PK,FK", "NOT NULL,", "FK → tasks.task_id"], [3, "教材編號", "material_id", "int", "PK,FK", "NOT NULL,", "FK → materials.material_id"], [4, "已觀看區間", "watched_segments", "nvarchar(max)", null, ",", "看過的區間（影片才有）；存 JSON 格式"], [5, "上次播放位置", "last_position_sec", "int", null, ",", "影片才有"], [6, "完成時間", "completed_at", "datetime", null, ",", "影片達 80% ／文件下載"]], "pk": "user_id,task_id,material_id"}, {"sheet": "08_handouts", "zh": "學生講義", "en": "handouts", "rows": [[1, "講義編號", "handout_id", "int", "PK", "NOT NULL,", "IDENTITY(1,1)"], [2, "學生編號", "user_id", "int", "FK", "NOT NULL,", "FK → users.user_id；學生（使用者編號）"], [3, "任務編號", "task_id", "int", "FK", "NOT NULL,", "FK → tasks.task_id"], [4, "講義名稱", "handout_title", "nvarchar(100)", null, "NOT NULL,", null], [5, "講義類型", "handout_type", "nvarchar(20)", null, "NOT NULL,", "限定值：ppt / pdf / word"], [6, "講義檔案路徑", "handout_file_url", "nvarchar(500)", null, "NOT NULL,", null], [7, "版本號", "version", "int", null, "NOT NULL,", null], [8, "講義上傳時間", "handout_uploaded_at", "datetime", null, "NOT NULL,", null]], "pk": "handout_id"}, {"sheet": "09_handout_evaluations", "zh": "講義評分", "en": "handout_evaluations", "rows": [[1, "講義編號", "handout_id", "int", "PK,FK", "NOT NULL,", "FK → handouts.handout_id；講義（某一版本）"], [2, "講義評分時間", "handout_evaluated_at", "datetime", null, "NOT NULL,", null]], "pk": "handout_id"}, {"sheet": "10_handout_eval_items", "zh": "講義評分細項", "en": "handout_eval_items", "rows": [[1, "講義編號", "handout_id", "int", "PK,FK", "NOT NULL,", "FK → handout_evaluations.handout_id；對應的講義評分"], [2, "Bloom 指標編號", "level_id", "tinyint", "PK", "NOT NULL,", "CHECK 1–6（Bloom 指標）"], [3, "講義分數", "handout_score", "tinyint", null, "NOT NULL,", "0 / 1 / 2"], [4, "講義評論", "handout_comment", "nvarchar(max)", null, "NOT NULL,", "該指標的評論"]], "pk": "handout_id,level_id"}, {"sheet": "11_teaching_sessions", "zh": "教學場次", "en": "teaching_sessions", "rows": [[1, "場次編號", "session_id", "int", "PK", "NOT NULL,", "IDENTITY(1,1)"], [2, "講義編號", "handout_id", "int", "FK", "NOT NULL,", "FK → handouts.handout_id；使用的講義版本"], [3, "開始教學時間", "started_at", "datetime", null, "NOT NULL,", null], [4, "結束教學時間", "ended_at", "datetime", null, ",", null], [5, "場次狀態", "session_status", "nvarchar(20)", null, "NOT NULL,", "限定值：教學中 / 問答完成 / 已評分 / 已摘要"]], "pk": "session_id"}, {"sheet": "12_transcripts", "zh": "教學逐字稿", "en": "transcripts", "rows": [[1, "逐字稿編號", "transcript_id", "int", "PK", "NOT NULL,", "IDENTITY(1,1)"], [2, "場次編號", "session_id", "int", "FK,UK", "NOT NULL,", "FK → teaching_sessions.session_id；UNIQUE"], [3, "逐字稿全文", "full_text", "nvarchar(max)", null, "NOT NULL,", null], [4, "逐字稿分段", "segments", "nvarchar(max)", null, "NOT NULL,", "含時間軸的分段；存 JSON 格式"], [5, "建立時間", "created_at", "datetime", null, "NOT NULL,", null]], "pk": "transcript_id"}, {"sheet": "13_session_qa", "zh": "聽眾 AI 問答", "en": "session_qa", "rows": [[1, "問答編號", "qa_id", "int", "PK", "NOT NULL,", "IDENTITY(1,1)"], [2, "場次編號", "session_id", "int", "FK", "NOT NULL,", "FK → teaching_sessions.session_id"], [3, "題號", "seq", "int", null, "NOT NULL,", null], [4, "提問難度", "difficulty", "tinyint", null, "NOT NULL,", "0淺 1中 2深"], [5, "提問內容", "question_text", "nvarchar(max)", null, "NOT NULL,", "聽眾 AI 提問"], [6, "回答內容", "answer_text", "nvarchar(max)", null, "NOT NULL,", "學生回答"]], "pk": "qa_id"}, {"sheet": "14_teaching_evaluations", "zh": "評分AI評分", "en": "teaching_evaluations", "rows": [[1, "評分AI評分編號", "eval_id", "int", "PK", "NOT NULL,", "IDENTITY(1,1)"], [2, "場次編號", "session_id", "int", "FK,UK", "NOT NULL,", "FK → teaching_sessions.session_id；UNIQUE"], [3, "AI 評分時間", "ai_evaluated_at", "datetime", null, "NOT NULL,", null]], "pk": "eval_id"}, {"sheet": "15_evaluation_items", "zh": "評分AI評分細項", "en": "evaluation_items", "rows": [[1, "評分AI評分編號", "eval_id", "int", "PK,FK", "NOT NULL,", "FK → teaching_evaluations.eval_id"], [2, "Bloom 指標編號", "level_id", "tinyint", "PK", "NOT NULL,", "CHECK 1–6（Bloom 指標）"], [3, "AI 分數", "ai_score", "tinyint", null, "NOT NULL,", "0 / 1 / 2"], [4, "AI 評論", "ai_comment", "nvarchar(max)", null, "NOT NULL,", "該指標的評論"]], "pk": "eval_id,level_id"}, {"sheet": "16_evaluation_summaries", "zh": "分段摘要", "en": "evaluation_summaries", "rows": [[1, "摘要編號", "summary_id", "int", "PK", "NOT NULL,", "IDENTITY(1,1)"], [2, "評分AI評分編號", "eval_id", "int", "FK", "NOT NULL,", "FK → teaching_evaluations.eval_id"], [3, "Bloom 指標編號", "level_id", "tinyint", null, "NOT NULL,", "CHECK 1–6（Bloom 指標）"], [4, "摘要內容", "summary_text", "nvarchar(max)", null, "NOT NULL,", "不含分數"], [5, "建立時間", "created_at", "datetime", null, "NOT NULL,", null]], "pk": "summary_id"}, {"sheet": "17_teacher_reviews", "zh": "教師評分", "en": "teacher_reviews", "rows": [[1, "評分AI評分編號", "eval_id", "int", "PK,FK", "NOT NULL,", "FK → teaching_evaluations.eval_id；老師看的是哪一次 AI 評分的摘要"], [2, "評分教師編號", "user_id", "int", "FK", "NOT NULL,", "FK → users.user_id；評分老師（使用者編號）"], [3, "教師評分時間", "reviewed_at", "datetime", null, "NOT NULL,", null]], "pk": "eval_id"}, {"sheet": "18_teacher_review_items", "zh": "教師評分細項", "en": "teacher_review_items", "rows": [[1, "評分AI評分編號", "eval_id", "int", "PK,FK", "NOT NULL,", "FK → teacher_reviews.eval_id；對應的教師評分"], [2, "Bloom 指標編號", "level_id", "tinyint", "PK", "NOT NULL,", "CHECK 1–6（Bloom 指標）"], [3, "教師分數", "teacher_score", "tinyint", null, "NOT NULL,", "0 / 1 / 2"], [4, "教師評語", "teacher_comment", "nvarchar(max)", null, ",", "老師評語（可空）"]], "pk": "eval_id,level_id"}, {"sheet": "19_bloom_levels", "zh": "Bloom 指標（寫在程式內）", "en": "bloom_levels", "rows": [[1, "Bloom 指標編號", "level_id", "tinyint", "PK", "NOT NULL,", "1–6"], [2, "指標名稱", "level_name", "nvarchar(20)", null, "NOT NULL,", "記憶 理解 應用 分析 評鑑 創造"], [3, "指標定義", "definition", "nvarchar(max)", null, "NOT NULL,", null], [4, "範例問題", "example_questions", "nvarchar(max)", null, "NOT NULL,", null]], "pk": "level_id"}];
+
+const PARSED = {};
+for (const [k, src] of Object.entries(E)) {
+  const head = src.match(/^(\w+)\["([^"]+)"\]/);
+  const rows = [];
+  for (const line of src.split("\n").slice(1)) {
+    const m = line.match(/^\s*(\w+) (\w+)(?: ((?:PK|FK|UK)(?:, ?(?:PK|FK|UK))*))? "(.*)"$/);
+    if (m) rows.push({ type: m[1], name: m[2], keys: (m[3] || "").replace(/, ?/g, ","), desc: m[4] });
+  }
+  PARSED[head[1]] = { title: head[2], rows };
+}
+const esc = t => String(t ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+// 每張表顯示為「欄位名稱｜型別｜鍵｜說明」（沿用 Mermaid 算好的框大小與連線）
+function relabel() {
+  const svgEl = diagram.querySelector("svg"); if (!svgEl) return;
+  svgEl.querySelectorAll('g[id*="-entity-"]').forEach(g => {
+    const m = g.id.match(/-entity-(.+)-\d+$/); const info = m && PARSED[m[1]]; if (!info) return;
+    const box = g.getBBox();
+    [...g.childNodes].forEach(c => { if (c.setAttribute) c.setAttribute("visibility", "hidden"); });
+    const fo = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
+    fo.setAttribute("x", box.x); fo.setAttribute("y", box.y); fo.setAttribute("width", box.width); fo.setAttribute("height", box.height);
+    const rh = box.height / (info.rows.length + 1);
+    const body = info.rows.map(r => `<tr><td>${esc(r.name)}</td><td>${esc(r.type)}</td><td class="k">${esc(r.keys)}</td><td>${esc(r.desc)}</td></tr>`).join("");
+    fo.innerHTML = `<div xmlns="http://www.w3.org/1999/xhtml" class="ent"><table style="--rh:${rh}px"><thead><tr><th colspan="4">${esc(info.title)}</th></tr></thead><tbody>${body}</tbody></table></div>`;
+    g.appendChild(fo);
+  });
+}
+
 let zoom = 1, n = 0;
+const stage = document.getElementById("stage");
 const diagram = document.getElementById("diagram");
 const applyZoom = () => { diagram.style.transform = `scale(${zoom})`; document.getElementById("zlabel").textContent = Math.round(zoom*100)+"%"; };
-document.getElementById("zin").onclick = () => { zoom = Math.min(2.5, zoom+0.1); applyZoom(); };
-document.getElementById("zout").onclick = () => { zoom = Math.max(0.3, zoom-0.1); applyZoom(); };
+function zoomAt(factor, clientX, clientY) {
+  const r = stage.getBoundingClientRect();
+  const px = clientX - r.left + stage.scrollLeft, py = clientY - r.top + stage.scrollTop;
+  const old = zoom; zoom = Math.min(3, Math.max(0.2, +(zoom * factor).toFixed(2))); applyZoom();
+  const k = zoom / old;
+  stage.scrollLeft = px * k - (clientX - r.left); stage.scrollTop = py * k - (clientY - r.top);
+}
+document.getElementById("zin").onclick = () => { zoom = Math.min(3, zoom+0.1); applyZoom(); };
+document.getElementById("zout").onclick = () => { zoom = Math.max(0.2, zoom-0.1); applyZoom(); };
 document.getElementById("zfit").onclick = () => { zoom = 1; applyZoom(); };
+stage.addEventListener("mousedown", e => {
+  if (e.button !== 0 || !(e.ctrlKey || e.metaKey)) return;
+  e.preventDefault(); zoomAt(e.shiftKey ? 1/1.25 : 1.25, e.clientX, e.clientY);
+});
+stage.addEventListener("contextmenu", e => { if (e.ctrlKey) e.preventDefault(); });
+stage.addEventListener("wheel", e => {
+  if (!(e.ctrlKey || e.metaKey)) return;
+  e.preventDefault(); zoomAt(e.deltaY < 0 ? 1.1 : 1/1.1, e.clientX, e.clientY);
+}, { passive:false });
+const setCtrl = e => { stage.classList.toggle("ctrl", e.ctrlKey || e.metaKey); stage.classList.toggle("shift", e.shiftKey); };
+window.addEventListener("keydown", setCtrl); window.addEventListener("keyup", setCtrl);
+
+const selView = document.getElementById("selView"), selTable = document.getElementById("selTable");
+function setHash(h) { try { history.replaceState(null, "", "#" + h); } catch (e) {} }
 
 async function show(v) {
-  document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.id === v.id));
+  selView.value = v.id; selTable.value = ""; selView.classList.add("on"); selTable.classList.remove("on");
   document.getElementById("desc").textContent = v.desc;
   const body = "erDiagram\n" + v.ents.map(k => E[k]).join("\n") + "\n" + v.rels.map(k => R[k]).join("\n");
   let svg = null;
   try { svg = (await mermaid.render("er" + (n++), body)).svg; } catch (e) { diagram.textContent = "圖表載入失敗：" + e.message; }
   if (svg) { diagram.innerHTML = svg; try { relabel(); } catch (e) { console.log("relabel failed", e); } }
-  zoom = v.id === "all" ? 0.6 : 1; applyZoom();
-  try { history.replaceState(null, "", "#" + v.id); } catch (e) {}
+  zoom = v.id === "all" ? 0.6 : 1; applyZoom(); stage.scrollTo(0, 0);
+  setHash(v.id);
 }
 
-const tabs = document.getElementById("tabs");
-VIEWS.forEach(v => { const b = document.createElement("button"); b.textContent = v.name; b.dataset.id = v.id; b.onclick = () => show(v); tabs.appendChild(b); });
-const start = VIEWS.find(v => "#" + v.id === location.hash) || VIEWS[0];
-show(start);
+function showTable(t) {
+  selTable.value = t.en; selView.value = ""; selTable.classList.add("on"); selView.classList.remove("on");
+  document.getElementById("desc").textContent = `${t.sheet}｜${t.zh}（${t.en}）：與 Excel 工作表相同的欄位規格。`;
+  const rows = t.rows.map(r => `<tr><td class="c">${esc(r[0])}</td><td>${esc(r[1])}</td><td class="${r[4] && r[4].includes("PK") ? "pk" : ""}">${esc(r[2])}</td><td>${esc(r[3])}</td><td class="c">${esc(r[4])}</td><td>${esc(r[5])}</td><td class="note">${esc(r[6])}</td></tr>`).join("");
+  diagram.innerHTML = `<div class="spec">
+    <a class="back" href="#all" id="backAll">總表</a>
+    <table>
+      <tr class="file"><td class="c">檔名</td><td>${esc(t.zh)}</td><td>${esc(t.en)}</td></tr>
+      <tr><th class="c">序號</th><th>欄位中文名</th><th>欄位英文名</th><th>型別</th><th class="c">鍵</th><th>限制</th><th>備註</th></tr>
+      ${rows}
+      <tr class="foot"><td colspan="7">&nbsp;</td></tr>
+      <tr class="foot"><td></td><td>Pkey</td><td>primary key(</td><td>${esc(t.pk)}</td><td></td><td></td><td></td></tr>
+      <tr class="foot"><td></td><td></td><td></td><td></td><td></td><td>))</td><td></td></tr>
+    </table></div>`;
+  document.getElementById("backAll").onclick = e => { e.preventDefault(); show(VIEWS[0]); };
+  zoom = 1; applyZoom(); stage.scrollTo(0, 0);
+  setHash("table-" + t.en.replace(/_/g, "-"));
+}
+
+selView.innerHTML = `<option value="" disabled>— 選擇情境 —</option>` + VIEWS.map(v => `<option value="${v.id}">${esc(v.name)}</option>`).join("");
+selTable.innerHTML = `<option value="" disabled>— 選擇資料表 —</option>` + SPEC.map(t => `<option value="${t.en}">${esc(t.sheet)}｜${esc(t.zh)}</option>`).join("");
+selView.onchange = () => { const v = VIEWS.find(x => x.id === selView.value); if (v) show(v); };
+selTable.onchange = () => { const t = SPEC.find(x => x.en === selTable.value); if (t) showTable(t); };
+
+function route() {
+  const h = location.hash.slice(1);
+  const t = SPEC.find(x => "table-" + x.en.replace(/_/g, "-") === h);
+  if (t) return showTable(t);
+  show(VIEWS.find(v => v.id === h) || VIEWS[0]);
+}
+window.addEventListener("hashchange", route);
+route();
 </script>
 </body>
 </html>
