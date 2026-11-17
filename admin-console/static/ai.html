@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 服務 · 管理後台</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><b>管理後台</b><span>AI 教學評量系統</span></div>
+  <nav class="topnav" aria-label="主要頁面">
+    <a href="/accounts">帳號與權限</a>
+    <a href="/ai" class="active" aria-current="page">AI 服務</a>
+  </nav>
+  <div class="spacer"></div>
+  <div class="user-chip">
+    <span class="muted small" id="me"></span>
+    <button class="sm" id="logout" type="button">登出</button>
+  </div>
+</header>
+
+<main class="page">
+  <div class="page-head">
+    <div>
+      <h1>AI 服務</h1>
+      <p class="muted">管理聽眾 AI 與評分 AI，監測運作狀態，並記錄、處理異常。</p>
+    </div>
+    <span class="live muted small"><span class="dot"></span><span id="live-text">持續監控中</span></span>
+  </div>
+
+  <div class="segmented" role="tablist" aria-label="功能">
+    <button type="button" role="tab" data-section="manage"><span class="num">1</span>管理 AI 功能</button>
+    <button type="button" role="tab" data-section="monitor"><span class="num">2</span>監測 AI 功能</button>
+    <button type="button" role="tab" data-section="anomalies"><span class="num">3</span>AI 異常紀錄 <span class="badge bad hidden" id="open-count" style="margin-left:6px"></span></button>
+  </div>
+
+  <!-- 1. 管理 AI 功能 -->
+  <section data-section="manage" class="stack" aria-label="管理 AI 功能">
+    <div class="grid cols-2" id="service-forms"></div>
+    <div class="card">
+      <div class="row" style="justify-content:space-between;margin-bottom:4px">
+        <h2>AI 治理政策</h2>
+        <span class="badge" id="policy-badge"></span>
+      </div>
+      <p class="muted small">以下功能由系統固定停用，管理者只能檢核、無法開啟。每次監測都會一併確認政策是否落實。</p>
+      <div id="policy-rows" style="margin-top:8px"></div>
+    </div>
+  </section>
+
+  <!-- 2. 監測 AI 功能 -->
+  <section data-section="monitor" class="stack hidden" aria-label="監測 AI 功能">
+    <div id="monitor-banner"></div>
+    <div class="row" style="justify-content:space-between">
+      <p class="muted small" id="monitor-meta"></p>
+      <button type="button" id="btn-check">立即檢查</button>
+    </div>
+    <div class="grid cols-2" id="status-cards"></div>
+  </section>
+
+  <!-- 3. AI 異常紀錄 -->
+  <section data-section="anomalies" class="stack hidden" aria-label="AI 異常紀錄">
+    <div class="card flush">
+      <div class="card-head">
+        <div class="row">
+          <label class="field" style="flex-direction:row;align-items:center">狀態
+            <select class="inline" id="a-status">
+              <option value="unresolved">未排除</option>
+              <option value="">全部</option>
+              <option value="open">待處理</option>
+              <option value="investigating">處理中</option>
+              <option value="resolved">已排除</option>
+            </select>
+          </label>
+          <label class="field" style="flex-direction:row;align-items:center">服務
+            <select class="inline" id="a-service">
+              <option value="">全部</option>
+              <option value="listener">聽眾 AI</option>
+              <option value="scoring">評分 AI</option>
+            </select>
+          </label>
+        </div>
+        <button type="button" id="btn-new-anomaly">＋ 手動新增異常</button>
+      </div>
+      <div class="table-scroll">
+        <table style="min-width:900px">
+          <thead><tr><th>編號</th><th>時間</th><th>服務</th><th>等級</th><th>說明</th><th>來源</th><th>狀態</th><th class="actions">操作</th></tr></thead>
+          <tbody id="anomaly-rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- 處理異常 -->
+<dialog id="handle-dialog" aria-labelledby="handle-title">
+  <form method="dialog" id="handle-form">
+    <div class="stack" style="gap:4px">
+      <span class="muted small" id="handle-meta"></span>
+      <h2 id="handle-title">處理異常</h2>
+    </div>
+    <p id="handle-message" class="mono" style="background:rgba(0,0,0,.04);padding:10px 12px;border-radius:12px"></p>
+    <label class="field">狀態
+      <select name="status">
+        <option value="open">待處理</option>
+        <option value="investigating">處理中</option>
+        <option value="resolved">已排除</option>
+      </select>
+    </label>
+    <label class="field">處理說明（標記已排除時必填）
+      <textarea name="note" placeholder="記錄原因與處理方式"></textarea>
+    </label>
+    <label class="row" style="font-size:14px"><input type="checkbox" name="notify">通報系統維運群組與受影響教師</label>
+    <div class="dialog-actions">
+      <button type="button" class="dialog-cancel">取消</button>
+      <button class="primary" type="submit">儲存</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- 手動新增異常 -->
+<dialog id="new-anomaly-dialog" aria-labelledby="new-anomaly-title">
+  <form method="dialog" id="new-anomaly-form">
+    <h2 id="new-anomaly-title">手動新增異常</h2>
+    <label class="field">服務
+      <select name="service_id"><option value="listener">聽眾 AI</option><option value="scoring">評分 AI</option></select>
+    </label>
+    <label class="field">等級
+      <select name="level"><option value="warning">警告</option><option value="critical">嚴重</option></select>
+    </label>
+    <label class="field">異常說明<textarea name="message" required placeholder="例：教師回報評分摘要內容不完整"></textarea></label>
+    <div class="dialog-actions">
+      <button type="button" class="dialog-cancel">取消</button>
+      <button class="primary" type="submit">新增</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="/static/js/common.js"></script>
+<script src="/static/js/ai.js"></script>
+</body>
+</html>

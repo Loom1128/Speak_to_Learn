@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>管理者登入 · AI 教學評量系統</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<main class="login">
+  <form class="card" id="login-form" novalidate>
+    <div class="stack" style="gap:4px">
+      <span class="muted small" style="letter-spacing:.06em">AI 教學評量系統</span>
+      <h1>管理後台</h1>
+    </div>
+    <label class="field">管理者帳號
+      <input id="username" name="username" autocomplete="username" required>
+    </label>
+    <label class="field">密碼
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+    </label>
+    <p class="error" id="error" role="alert"></p>
+    <button class="primary" type="submit">登入</button>
+    <p class="muted small" style="text-align:center">僅限管理者帳號。教師與學生請由一般入口登入。</p>
+  </form>
+</main>
+<script src="/static/js/common.js"></script>
+<script>
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const err = document.getElementById('error');
+  err.textContent = '';
+  try {
+    await api('/api/login', {
+      method: 'POST',
+      body: {
+        username: document.getElementById('username').value,
+        password: document.getElementById('password').value,
+      },
+    });
+    location.href = '/accounts';
+  } catch (ex) {
+    err.textContent = ex.message;
+  }
+});
+</script>
+</body>
+</html>

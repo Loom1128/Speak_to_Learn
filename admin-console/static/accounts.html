@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>帳號與權限 · 管理後台</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><b>管理後台</b><span>AI 教學評量系統</span></div>
+  <nav class="topnav" aria-label="主要頁面">
+    <a href="/accounts" class="active" aria-current="page">帳號與權限</a>
+    <a href="/ai">AI 服務</a>
+  </nav>
+  <div class="spacer"></div>
+  <div class="user-chip">
+    <span class="muted small" id="me"></span>
+    <button class="sm" id="logout" type="button">登出</button>
+  </div>
+</header>
+
+<main class="page">
+  <div class="page-head">
+    <div>
+      <h1>帳號與權限</h1>
+      <p class="muted">管理帳號、指派角色，並設定每個角色可以存取哪些資料。</p>
+    </div>
+  </div>
+
+  <div class="segmented" role="tablist" aria-label="功能">
+    <button type="button" role="tab" data-section="users"><span class="num">1</span>管理帳號</button>
+    <button type="button" role="tab" data-section="roles"><span class="num">2</span>設定帳號角色</button>
+    <button type="button" role="tab" data-section="perms"><span class="num">3</span>角色資料存取權限</button>
+  </div>
+
+  <!-- 1. 管理帳號 -->
+  <section data-section="users" class="stack" aria-label="管理帳號">
+    <div class="card flush">
+      <div class="card-head">
+        <div class="row">
+          <label class="field" style="flex-direction:row;align-items:center">角色
+            <select class="inline" id="f-role">
+              <option value="">全部</option>
+              <option value="admin">管理者</option>
+              <option value="teacher">教師</option>
+              <option value="student">學生</option>
+            </select>
+          </label>
+          <label class="field" style="flex-direction:row;align-items:center">狀態
+            <select class="inline" id="f-active">
+              <option value="">全部</option>
+              <option value="1">啟用</option>
+              <option value="0">停用</option>
+            </select>
+          </label>
+          <label class="field" style="flex-direction:row;align-items:center">
+            <span class="hidden">搜尋</span>
+            <input type="search" id="f-q" placeholder="搜尋姓名、帳號、Email" style="width:240px" aria-label="搜尋姓名、帳號、Email">
+          </label>
+        </div>
+        <button class="primary" type="button" id="btn-new">＋ 新增帳號</button>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>姓名</th><th>帳號</th><th>Email</th><th>角色</th><th>狀態</th><th>最後登入</th><th class="actions">操作</th></tr>
+          </thead>
+          <tbody id="user-rows"><tr><td colspan="7" class="empty">載入中…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="card-foot"><span class="muted small" id="user-count"></span></div>
+    </div>
+  </section>
+
+  <!-- 2. 設定帳號角色 -->
+  <section data-section="roles" class="stack hidden" aria-label="設定帳號角色">
+    <div class="grid cols-3" id="role-cards"></div>
+    <div class="card flush">
+      <div class="card-head">
+        <h2>指派角色</h2>
+        <span class="muted small">變更後立即生效，並寫入操作紀錄</span>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>姓名</th><th>帳號</th><th>目前角色</th><th>變更為</th></tr></thead>
+          <tbody id="role-rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. 角色資料存取權限 -->
+  <section data-section="perms" class="stack hidden" aria-label="角色資料存取權限">
+    <div class="card flush">
+      <div class="card-head">
+        <h2>資料存取權限矩陣</h2>
+        <div class="legend small">
+          <span class="badge ok">編輯</span>
+          <span class="badge info">檢視</span>
+          <span class="badge warn">僅本人</span>
+          <span class="badge">無權限</span>
+          <span class="lock"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>系統鎖定</span>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table style="min-width:760px">
+          <thead><tr><th>資料／功能</th><th>管理者</th><th>教師</th><th>學生</th></tr></thead>
+          <tbody id="perm-rows"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card flush">
+      <div class="card-head"><h2>最近操作紀錄</h2></div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>時間</th><th>操作者</th><th>動作</th><th>對象</th><th>內容</th></tr></thead>
+          <tbody id="audit-rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- 新增／編輯帳號 -->
+<dialog id="user-dialog" aria-labelledby="user-dialog-title">
+  <form method="dialog" id="user-form">
+    <h2 id="user-dialog-title">新增帳號</h2>
+    <label class="field">姓名<input name="name" required></label>
+    <label class="field">帳號<input name="username" required></label>
+    <label class="field">Email<input name="email" type="email"></label>
+    <label class="field" data-only="new">角色
+      <select name="role_id">
+        <option value="student">學生</option>
+        <option value="teacher">教師</option>
+        <option value="admin">管理者</option>
+      </select>
+    </label>
+    <label class="field" data-only="new">初始密碼（留空則自動產生）
+      <input name="password" type="password" autocomplete="new-password" minlength="8">
+    </label>
+    <div class="dialog-actions">
+      <button type="button" value="cancel" id="user-cancel">取消</button>
+      <button class="primary" type="submit">儲存</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="/static/js/common.js"></script>
+<script src="/static/js/accounts.js"></script>
+</body>
+</html>
